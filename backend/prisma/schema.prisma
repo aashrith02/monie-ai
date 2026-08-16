@@ -9,7 +9,7 @@ datasource db {
 }
 
 model Expense {
-  id        String   @id
+  id String @id @default(uuid())
   title     String
   amount    Decimal  @db.Decimal(10, 2)
   date      DateTime

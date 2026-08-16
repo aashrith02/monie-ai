@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -38,6 +39,10 @@ const signupSchema = z
 type SignupFormData = z.infer<typeof signupSchema>;
 
 export default function SignUp() {
+  const [serverError, setServerError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+
   const {
     register,
     handleSubmit,
@@ -46,8 +51,43 @@ export default function SignUp() {
     resolver: zodResolver(signupSchema),
   });
 
-  const onSubmit = (data: SignupFormData) => {
-    console.log("Signup data:", data);
+  const onSubmit = async (data: SignupFormData) => {
+    setServerError("");
+    setSuccessMessage("");
+    setLoading(true);
+
+    try {
+      const response = await fetch(
+        "http://localhost:5001/api/auth/register",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: data.name,
+            email: data.email,
+            password: data.password,
+          }),
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        setServerError(result.message || "Registration failed");
+        return;
+      }
+
+      setSuccessMessage("Account created successfully!");
+
+      console.log("Registered user:", result.user);
+    } catch (error) {
+      console.error("Registration error:", error);
+      setServerError("Unable to connect to the server");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -130,18 +170,39 @@ export default function SignUp() {
               helperText={errors.confirmPassword?.message}
             />
 
+            {serverError && (
+              <Typography
+                color="error"
+                variant="body2"
+                sx={{ mt: 2 }}
+              >
+                {serverError}
+              </Typography>
+            )}
+
+            {successMessage && (
+              <Typography
+                color="success.main"
+                variant="body2"
+                sx={{ mt: 2 }}
+              >
+                {successMessage}
+              </Typography>
+            )}
+
             <Button
               fullWidth
               type="submit"
               variant="contained"
               size="large"
+              disabled={loading}
               sx={{
                 mt: 3,
                 py: 1.5,
                 borderRadius: 2,
               }}
             >
-              Create Account
+              {loading ? "Creating Account..." : "Create Account"}
             </Button>
 
             <Typography

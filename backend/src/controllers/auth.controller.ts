@@ -41,3 +41,12 @@ export async function register(
     });
   }
 }
+
+export async function login(
+  req: Request,
+  res: Response
+): Promise<Response> {
+  return res.status(501).json({
+    message: "Login functionality not implemented yet",
+  });
+}

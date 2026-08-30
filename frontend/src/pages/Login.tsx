@@ -26,6 +26,7 @@ type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function Login() {
   const [serverError, setServerError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
   const {
@@ -38,6 +39,7 @@ export default function Login() {
 
   const onSubmit = async (data: LoginFormData) => {
     setServerError("");
+    setSuccessMessage("");
     setLoading(true);
 
     try {
@@ -58,7 +60,9 @@ export default function Login() {
         setServerError(result.message || "Login failed");
         return;
       }
-
+    if (result.user) {
+        setSuccessMessage("Login successful! Redirecting...");
+    }
       console.log("Logged in user:", result.user);
     } catch (error) {
       console.error("Login error:", error);
@@ -128,6 +132,13 @@ export default function Login() {
             {serverError && (
               <Typography color="error" variant="body2" sx={{ mt: 2 }}>
                 {serverError}
+              </Typography>
+            )}
+
+
+            {successMessage && (
+              <Typography color="success" variant="body2" sx={{ mt: 2 }}>
+                {successMessage}
               </Typography>
             )}
 

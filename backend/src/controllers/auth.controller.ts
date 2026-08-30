@@ -1,52 +1,66 @@
 import { type Request, type Response } from "express";
-import { registerUser } from "../services/auth.service.js";
+import { registerUser, loginUser } from "../services/auth.service.js";
 
-export async function register(
-  req: Request,
-  res: Response
-): Promise<Response> {
-  try {
-    const { name, email, password } = req.body;
+export async function register(req: Request, res: Response): Promise<Response> {
+	try {
+		const { name, email, password } = req.body;
 
-    if (!name || !email || !password) {
-      return res.status(400).json({
-        message: "Name, email and password are required",
-      });
-    }
+		if (!name || !email || !password) {
+			return res.status(400).json({
+				message: "Name, email and password are required",
+			});
+		}
 
-    const user = await registerUser({
-      name,
-      email,
-      password,
-    });
+		const user = await registerUser({
+			name,
+			email,
+			password,
+		});
 
-    return res.status(201).json({
-      message: "User registered successfully",
-      user,
-    });
-  } catch (error) {
-    if (
-      error instanceof Error &&
-      error.message === "EMAIL_ALREADY_EXISTS"
-    ) {
-      return res.status(409).json({
-        message: "Email already registered",
-      });
-    }
+		return res.status(201).json({
+			message: "User registered successfully",
+			user,
+		});
+	} catch (error) {
+		if (error instanceof Error && error.message === "EMAIL_ALREADY_EXISTS") {
+			return res.status(409).json({
+				message: "Email already registered",
+			});
+		}
 
-    console.error(error);
+		console.error(error);
 
-    return res.status(500).json({
-      message: "Internal server error",
-    });
-  }
+		return res.status(500).json({
+			message: "Internal server error",
+		});
+	}
 }
 
-export async function login(
-  req: Request,
-  res: Response
-): Promise<Response> {
-  return res.status(501).json({
-    message: "Login functionality not implemented yet",
-  });
+export async function login(req: Request, res: Response): Promise<Response> {
+	try {
+		const { email, password } = req.body;
+		if (!email || !password) {
+			return res.status(400).json({
+				message: "Email and password are required",
+			});
+		}
+
+		const user = await loginUser(email, password);
+
+		return res.status(200).json({
+			message: "User logged in successfully",
+			user,
+		});
+	} catch (error) {
+		console.error(error);
+		if (error instanceof Error && error.message === "INVALID_CREDENTIALS") {
+			return res.status(401).json({
+				message: "Invalid email or password",
+			});
+		}
+		console.error(error);
+		return res.status(500).json({
+			message: "Internal server error",
+		});
+	}
 }

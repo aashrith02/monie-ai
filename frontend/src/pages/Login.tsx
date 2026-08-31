@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useNavigate } from "react-router-dom";
 import {
   Box,
   Button,
@@ -25,6 +26,7 @@ const loginSchema = z.object({
 type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function Login() {
+  const navigate = useNavigate();
   const [serverError, setServerError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -63,6 +65,7 @@ export default function Login() {
     if (result.user.token) {
         localStorage.setItem("token", result.user.token);
         setSuccessMessage("Login successful! Redirecting...");
+        navigate("/home"); // Redirect to dashboard or any other page
     }
       console.log("Logged in user:", result.user);
     } catch (error) {

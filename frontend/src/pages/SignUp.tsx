@@ -211,7 +211,7 @@ export default function SignUp() {
               sx={{ mt: 3 }}
             >
               Already have an account?{" "}
-              <Link href="#" underline="hover">
+              <Link href="/login" underline="hover">
                 Sign in
               </Link>
             </Typography>

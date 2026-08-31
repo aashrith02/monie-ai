@@ -19,6 +19,7 @@ app.get("/api/health", (_req, res) => {
   res.json({
     status: "ok",
     message: "Monies-AI backend is running",
+    jwtSecret: process.env.JWT_SECRET,
   });
 });
 

@@ -60,7 +60,8 @@ export default function Login() {
         setServerError(result.message || "Login failed");
         return;
       }
-    if (result.user) {
+    if (result.user.token) {
+        localStorage.setItem("token", result.user.token);
         setSuccessMessage("Login successful! Redirecting...");
     }
       console.log("Logged in user:", result.user);

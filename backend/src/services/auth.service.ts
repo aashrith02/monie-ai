@@ -1,5 +1,8 @@
 import bcrypt from "bcrypt";
 import { prisma } from "../config/prisma.js";
+import { generateToken } from "../src/jwt.js";
+import "dotenv/config";
+
 
 type RegisterInput = {
   name: string;
@@ -47,14 +50,18 @@ export async function loginUser(email: string, password: string) {
   }
 
   const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
+  
 
   if (!isPasswordValid) {
     throw new Error("INVALID_CREDENTIALS");
   }
 
+  
   return {
+
     id: user.id,
     name: user.name,
     email: user.email,
+    token: generateToken(user.id),
   };
 }

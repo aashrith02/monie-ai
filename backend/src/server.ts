@@ -1,5 +1,6 @@
 import express from "express";
 import authRoutes from "./routes/auth.routes.js";
+import expenseRoutes from "./routes/expense.routes.js";
 import "dotenv/config";
 import cors from "cors";
 
@@ -24,6 +25,7 @@ app.get("/api/health", (_req, res) => {
 });
 
 app.use("/api/auth", authRoutes);
+app.use("/api/expenses", expenseRoutes);
 
 const PORT = 5001;
 

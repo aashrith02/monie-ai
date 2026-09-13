@@ -65,7 +65,7 @@ export default function Login() {
     if (result.user.token) {
         localStorage.setItem("token", result.user.token);
         setSuccessMessage("Login successful! Redirecting...");
-        navigate("/home"); // Redirect to dashboard or any other page
+        navigate("/"); // Redirect to dashboard or any other page
     }
       console.log("Logged in user:", result.user);
     } catch (error) {

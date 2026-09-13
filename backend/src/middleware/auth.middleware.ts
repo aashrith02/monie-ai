@@ -31,20 +31,19 @@ export function authenticateToken(
   }
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET);
+    const decoded: unknown = jwt.verify(token, JWT_SECRET);
 
     if (
       typeof decoded !== "object" ||
       decoded === null ||
-      !("userId" in decoded) ||
-      typeof decoded.userId !== "string"
+      typeof (decoded as { userId?: unknown }).userId !== "string"
     ) {
       return res.status(401).json({
         message: "Invalid token",
       });
     }
 
-    req.userId = decoded.userId;
+    req.userId = (decoded as { userId: string }).userId;
 
     next();
   } catch {

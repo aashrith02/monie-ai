@@ -9,13 +9,15 @@ datasource db {
 }
 
 model Expense {
-  id String @id @default(uuid())
+  id        String   @id @default(uuid())
   title     String
   amount    Decimal  @db.Decimal(10, 2)
+  category  String
   date      DateTime
   notes     String?
   userId    String
   createdAt DateTime @default(now())
+
   User      User     @relation(fields: [userId], references: [id])
 }
 

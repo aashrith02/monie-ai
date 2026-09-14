@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createExpenseController } from "../controllers/expense.controller.js";
+import { createExpenseController, getExpensesController } from "../controllers/expense.controller.js";
 import { authenticateToken } from "../middleware/auth.middleware.js";
 
 const router = Router();
@@ -9,5 +9,12 @@ router.post(
   authenticateToken,
   createExpenseController
 );
+
+router.get(
+  "/getExpenses",
+  authenticateToken,
+  getExpensesController
+);
+
 
 export default router;

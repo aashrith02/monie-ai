@@ -13,9 +13,38 @@ import TrendingUpOutlinedIcon from "@mui/icons-material/TrendingUpOutlined";
 import TrendingDownOutlinedIcon from "@mui/icons-material/TrendingDownOutlined";
 import AccountBalanceWalletOutlinedIcon from "@mui/icons-material/AccountBalanceWalletOutlined";
 import AddExpenseDialog from "../components/AddExpenseDialog";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 export default function Home() {
   const [expenseDialogOpen, setExpenseDialogOpen] = useState(false);
+
+  const loadRecentlyAddedExpenses = async (token: string) => {
+    try {
+      const response = await fetch(
+        "http://localhost:5001/api/expenses/getExpenses?numberOfExpenses=5",
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to load user data");
+      }
+
+      const userData = await response.json();
+      console.log("User data:", userData);
+    } catch (error) {
+      console.error("Error loading user data:", error);
+    }
+  };
+
+  useEffect(() => {
+    void loadRecentlyAddedExpenses(localStorage.getItem("token") || "");
+  }, []);
+
   return (
     <Box>
       {/* Header */}

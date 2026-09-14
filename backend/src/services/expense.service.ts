@@ -27,3 +27,20 @@ export async function createExpense(
 
   return expense;
 }
+
+export async function getExpensesByUserId(userId: string, numberOfExpenses: number) {
+  return prisma.expense.findMany({
+    where: {
+      userId: userId,
+    },
+    take: numberOfExpenses !== undefined ? numberOfExpenses : 10,
+  });
+}
+
+export async function getExpenseById(expenseId: string) {
+  return prisma.expense.findUnique({
+    where: {
+      id: expenseId,
+    },
+  });
+}

@@ -12,10 +12,86 @@ import AddOutlinedIcon from "@mui/icons-material/AddOutlined";
 import TrendingUpOutlinedIcon from "@mui/icons-material/TrendingUpOutlined";
 import TrendingDownOutlinedIcon from "@mui/icons-material/TrendingDownOutlined";
 import AccountBalanceWalletOutlinedIcon from "@mui/icons-material/AccountBalanceWalletOutlined";
-import AddExpenseDialog from "../components/AddExpenseDialog";
-import { useState } from "react";
+
+import ExpenseDialog from "../components/ExpenseDialog";
+import { useEffect, useState } from "react";
+
+type Expense = {
+  id: string;
+  title: string;
+  amount: number | string;
+  category: string;
+  date: string;
+  notes?: string | null;
+};
+
 export default function Home() {
   const [expenseDialogOpen, setExpenseDialogOpen] = useState(false);
+
+  const [expenseDialogMode, setExpenseDialogMode] =
+    useState<"add" | "view" | "edit">("add");
+
+  const [selectedExpense, setSelectedExpense] =
+    useState<Expense | null>(null);
+
+  const [recentExpenses, setRecentExpenses] =
+    useState<Expense[]>([]);
+
+  const loadRecentlyAddedExpenses = async (
+    token: string,
+  ): Promise<Expense[]> => {
+    try {
+      const response = await fetch(
+        "http://localhost:5001/api/expenses/getExpenses?numberOfExpenses=5",
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to load expenses");
+      }
+
+      const data: { expenses: Expense[] } = await response.json();
+
+      console.log("Expenses:", data.expenses);
+
+      return data.expenses;
+    } catch (error) {
+      console.error("Error loading expenses:", error);
+      return [];
+    }
+  };
+
+  useEffect(() => {
+    const token = localStorage.getItem("token") || "";
+
+    loadRecentlyAddedExpenses(token).then((expenses) => {
+      setRecentExpenses(expenses);
+    });
+  }, []);
+
+  function handleAddExpense() {
+    setSelectedExpense(null);
+    setExpenseDialogMode("add");
+    setExpenseDialogOpen(true);
+  }
+
+  function handleViewExpense(expense: Expense) {
+    setSelectedExpense(expense);
+    setExpenseDialogMode("view");
+    setExpenseDialogOpen(true);
+  }
+
+  function handleCloseDialog() {
+    setExpenseDialogOpen(false);
+    setSelectedExpense(null);
+  }
+
   return (
     <Box>
       {/* Header */}
@@ -36,12 +112,13 @@ export default function Home() {
         </Button>
       </Stack>
 
-            {/* Recent activity */}
+      {/* Recent Activity */}
       <Card
         elevation={0}
         sx={{
           border: "1px solid",
           borderColor: "divider",
+          mb: 4,
         }}
       >
         <CardContent sx={{ p: 3 }}>
@@ -69,10 +146,11 @@ export default function Home() {
             </Box>
 
             <Stack direction="row" spacing={1.5} sx={{ ml: "auto" }}>
+              {/* Add Expense */}
               <Button
                 variant="outlined"
                 startIcon={<AddOutlinedIcon />}
-                onClick={() => setExpenseDialogOpen(true)}
+                onClick={handleAddExpense}
                 sx={{
                   borderRadius: 2,
                   textTransform: "none",
@@ -80,6 +158,8 @@ export default function Home() {
               >
                 Add Expense
               </Button>
+
+              {/* Add Income */}
               <Button
                 variant="contained"
                 startIcon={<AddOutlinedIcon />}
@@ -95,36 +175,35 @@ export default function Home() {
 
           <Divider />
 
-          <ActivityRow
-            title="Lunch"
-            category="Food"
-            amount="- ₹350"
-          />
-
-          <ActivityRow
-            title="Salary"
-            category="Income"
-            amount="+ ₹50,000"
-          />
-
-          <ActivityRow
-            title="Uber"
-            category="Transport"
-            amount="- ₹420"
-          />
-
-          <ActivityRow
-            title="PlayStation"
-            category="Entertainment"
-            amount="- ₹2,499"
-          />
+          {/* Recent Expenses */}
+          <Stack spacing={1.5} sx={{ mt: 2 }}>
+            {recentExpenses.length === 0 ? (
+              <Typography
+                color="text.secondary"
+                sx={{
+                  py: 3,
+                  textAlign: "center",
+                }}
+              >
+                No recent expenses
+              </Typography>
+            ) : (
+              recentExpenses.map((expense) => (
+                <ActivityRow
+                  key={expense.id}
+                  title={expense.title}
+                  category={expense.category}
+                  amount={`- ₹${Number(expense.amount).toFixed(2)}`}
+                  date={expense.date}
+                  onClick={() => handleViewExpense(expense)}
+                />
+              ))
+            )}
+          </Stack>
         </CardContent>
       </Card>
 
-
-      {/* Summary cards */}
-      
-
+      {/* Spending this month */}
       <Card
         elevation={0}
         sx={{
@@ -142,7 +221,6 @@ export default function Home() {
             August 2026
           </Typography>
 
-          {/* Chart placeholder */}
           <Box
             sx={{
               height: 280,
@@ -155,12 +233,13 @@ export default function Home() {
             }}
           >
             <Typography color="text.secondary">
-              Spending chart
+              for
             </Typography>
           </Box>
         </CardContent>
       </Card>
-      {/* Spending section */}
+
+      {/* Summary Cards */}
       <Box
         sx={{
           display: "grid",
@@ -172,7 +251,14 @@ export default function Home() {
           mb: 4,
         }}
       >
-        <Card elevation={0} sx={{ border: "1px solid", borderColor: "divider" }}>
+        {/* Income */}
+        <Card
+          elevation={0}
+          sx={{
+            border: "1px solid",
+            borderColor: "divider",
+          }}
+        >
           <CardContent>
             <Stack direction="row" justifyContent="space-between">
               <Box>
@@ -180,7 +266,11 @@ export default function Home() {
                   Income
                 </Typography>
 
-                <Typography variant="h5" fontWeight={700} sx={{ mt: 1 }}>
+                <Typography
+                  variant="h5"
+                  fontWeight={700}
+                  sx={{ mt: 1 }}
+                >
                   ₹50,000
                 </Typography>
 
@@ -198,7 +288,14 @@ export default function Home() {
           </CardContent>
         </Card>
 
-        <Card elevation={0} sx={{ border: "1px solid", borderColor: "divider" }}>
+        {/* Expenses */}
+        <Card
+          elevation={0}
+          sx={{
+            border: "1px solid",
+            borderColor: "divider",
+          }}
+        >
           <CardContent>
             <Stack direction="row" justifyContent="space-between">
               <Box>
@@ -206,7 +303,11 @@ export default function Home() {
                   Expenses
                 </Typography>
 
-                <Typography variant="h5" fontWeight={700} sx={{ mt: 1 }}>
+                <Typography
+                  variant="h5"
+                  fontWeight={700}
+                  sx={{ mt: 1 }}
+                >
                   ₹32,450
                 </Typography>
 
@@ -224,7 +325,14 @@ export default function Home() {
           </CardContent>
         </Card>
 
-        <Card elevation={0} sx={{ border: "1px solid", borderColor: "divider" }}>
+        {/* Net Balance */}
+        <Card
+          elevation={0}
+          sx={{
+            border: "1px solid",
+            borderColor: "divider",
+          }}
+        >
           <CardContent>
             <Stack direction="row" justifyContent="space-between">
               <Box>
@@ -232,7 +340,11 @@ export default function Home() {
                   Net Balance
                 </Typography>
 
-                <Typography variant="h5" fontWeight={700} sx={{ mt: 1 }}>
+                <Typography
+                  variant="h5"
+                  fontWeight={700}
+                  sx={{ mt: 1 }}
+                >
                   ₹17,550
                 </Typography>
 
@@ -251,9 +363,15 @@ export default function Home() {
         </Card>
       </Box>
 
-      <AddExpenseDialog
+      {/* Expense Dialog */}
+      <ExpenseDialog
         open={expenseDialogOpen}
-        onClose={() => setExpenseDialogOpen(false)}
+        mode={expenseDialogMode}
+        expense={selectedExpense}
+        onClose={handleCloseDialog}
+        onEdit={() => {
+          setExpenseDialogMode("edit");
+        }}
       />
     </Box>
   );
@@ -263,33 +381,90 @@ type ActivityRowProps = {
   title: string;
   category: string;
   amount: string;
+  date: string;
+  onClick: () => void;
 };
 
 function ActivityRow({
   title,
   category,
   amount,
+  date,
+  onClick,
 }: ActivityRowProps) {
   return (
-    <Stack
-      direction="row"
-      justifyContent="space-between"
-      alignItems="center"
-      sx={{ py: 2 }}
+    <Card
+      elevation={0}
+      onClick={onClick}
+      sx={{
+        border: "1px solid",
+        borderColor: "divider",
+        borderRadius: 2,
+        cursor: "pointer",
+        transition: "background-color 0.2s",
+
+        "&:hover": {
+          backgroundColor: "action.hover",
+        },
+      }}
     >
-      <Box>
-        <Typography fontWeight={500}>
-          {title}
-        </Typography>
+      <CardContent
+        sx={{
+          py: 2,
+          "&:last-child": {
+            pb: 2,
+          },
+        }}
+      >
+        <Stack
+          direction="row"
+          justifyContent="space-between"
+          alignItems="center"
+        >
+          <Box>
+            <Typography fontWeight={600}>
+              {title}
+            </Typography>
 
-        <Typography variant="body2" color="text.secondary">
-          {category}
-        </Typography>
-      </Box>
+            <Stack
+              direction="row"
+              spacing={1}
+              alignItems="center"
+            >
+              <Typography
+                variant="body2"
+                color="text.secondary"
+              >
+                {category}
+              </Typography>
 
-      <Typography fontWeight={600}>
-        {amount}
-      </Typography>
-    </Stack>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+              >
+                •
+              </Typography>
+
+              <Typography
+                variant="body2"
+                color="text.secondary"
+              >
+                {new Date(date).toLocaleDateString()}
+              </Typography>
+            </Stack>
+          </Box>
+
+          <Typography
+            fontWeight={600}
+            sx={{
+              whiteSpace: "nowrap",
+            }}
+          >
+            {amount}
+          </Typography>
+        </Stack>
+      </CardContent>
+    </Card>
   );
 }
+

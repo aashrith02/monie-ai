@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createExpenseController, getExpensesController } from "../controllers/expense.controller.js";
+import { createExpenseController, getExpensesController,updateExpenseController } from "../controllers/expense.controller.js";
 import { authenticateToken } from "../middleware/auth.middleware.js";
 
 const router = Router();
@@ -8,6 +8,12 @@ router.post(
   "/addExpenses",
   authenticateToken,
   createExpenseController
+);
+
+router.put(
+  "/updateExpense/:id",
+  authenticateToken,
+  updateExpenseController
 );
 
 router.get(

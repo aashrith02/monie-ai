@@ -45,6 +45,7 @@ type ExpenseDialogProps = {
   expense: Expense | null;
   onClose: () => void;
   onEdit: () => void;
+  onSave: () => void;
 };
 
 export default function ExpenseDialog({
@@ -53,6 +54,7 @@ export default function ExpenseDialog({
   expense,
   onClose,
   onEdit,
+  onSave,
 }: ExpenseDialogProps) {
   const {
     register,
@@ -140,7 +142,7 @@ export default function ExpenseDialog({
        */
       if (mode === "edit" && expense) {
         const response = await fetch(
-          `http://localhost:5001/api/expenses/${expense.id}`,
+          `http://localhost:5001/api/expenses/updateExpense/${expense.id}`,
           {
             method: "PUT",
 
@@ -163,8 +165,10 @@ export default function ExpenseDialog({
 
         console.log("Expense updated:", result);
       }
-
+      await onSave();
       reset();
+ // Call the onSave callback to refresh expenses in the parent component
+
       onClose();
     } catch (error) {
       console.error("Expense operation failed:", error);

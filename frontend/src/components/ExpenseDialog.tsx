@@ -140,7 +140,7 @@ export default function ExpenseDialog({
        */
       if (mode === "edit" && expense) {
         const response = await fetch(
-          `http://localhost:5001/api/expenses/${expense.id}`,
+          `http://localhost:5001/api/expenses/updateExpense/${expense.id}`,
           {
             method: "PUT",
 

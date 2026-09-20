@@ -33,6 +33,9 @@ export async function getExpensesByUserId(userId: string, numberOfExpenses: numb
     where: {
       userId: userId,
     },
+    orderBy: {
+      createdAt: "desc",
+    },
     take: numberOfExpenses !== undefined ? numberOfExpenses : 10,
   });
 }

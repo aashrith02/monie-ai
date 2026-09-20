@@ -37,6 +37,14 @@ export default function Home() {
   const [recentExpenses, setRecentExpenses] =
     useState<Expense[]>([]);
 
+  const refreshExpenses = async () => {
+    const token = localStorage.getItem("token") || "";
+
+    const expenses = await loadRecentlyAddedExpenses(token);
+
+    setRecentExpenses(expenses);
+};
+
   const loadRecentlyAddedExpenses = async (
     token: string,
   ): Promise<Expense[]> => {
@@ -369,8 +377,10 @@ export default function Home() {
         mode={expenseDialogMode}
         expense={selectedExpense}
         onClose={handleCloseDialog}
+        onSave ={refreshExpenses}
         onEdit={() => {
-          setExpenseDialogMode("edit");
+        setExpenseDialogMode("edit");
+
         }}
       />
     </Box>

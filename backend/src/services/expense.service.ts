@@ -1,11 +1,14 @@
-import { PrismaClient } from "../generated/prisma/client.js";
+import {
+  ExpenseCategory,
+  PrismaClient,
+} from "../generated/prisma/client.js";
 
 const prisma = new PrismaClient();
 
 export type CreateExpenseInput = {
   title: string;
   amount: number;
-  category: string;
+  categories: ExpenseCategory[];
   date: string;
   notes?: string;
 };
@@ -18,7 +21,7 @@ export async function createExpense(
     data: {
       title: input.title,
       amount: input.amount,
-      category: input.category,
+      categories: input.categories,
       date: new Date(input.date),
       userId,
       ...(input.notes !== undefined ? { notes: input.notes } : {}),
@@ -92,7 +95,9 @@ export async function updateExpense(expenseId: string, input: Partial<CreateExpe
     data: {
       ...(input.title !== undefined ? { title: input.title } : {}),
       ...(input.amount !== undefined ? { amount: input.amount } : {}),
-      ...(input.category !== undefined ? { category: input.category } : {}),
+      ...(input.categories !== undefined
+        ? { categories: input.categories }
+        : {}),
       ...(input.date !== undefined ? { date: new Date(input.date) } : {}),
       ...(input.notes !== undefined ? { notes: input.notes } : {}),
     },

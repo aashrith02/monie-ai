@@ -23,13 +23,17 @@ type Expense = {
   id: string;
   title: string;
   amount: number | string;
-  category: string;
+  categories: string[];
   date: string;
   notes?: string | null;
 };
 
 function formatCalendarDate(date: Date) {
   return date.toISOString().slice(0, 10);
+}
+
+function formatCategories(categories: string[]) {
+  return categories.map((category) => category.replaceAll("_", " ")).join(", ");
 }
 
 function getChartDateRange() {
@@ -351,7 +355,7 @@ export default function Home() {
                 <ActivityRow
                   key={expense.id}
                   title={expense.title}
-                  category={expense.category}
+                  category={formatCategories(expense.categories)}
                   amount={`- ₹${Number(expense.amount).toFixed(2)}`}
                   date={expense.date}
                   onClick={() => handleViewExpense(expense)}

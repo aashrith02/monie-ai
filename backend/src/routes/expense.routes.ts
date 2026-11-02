@@ -1,8 +1,15 @@
 import { Router } from "express";
-import { createExpenseController, getExpensesController,updateExpenseController } from "../controllers/expense.controller.js";
+import {
+  createExpenseController,
+  getExpenseCategoriesController,
+  getExpensesController,
+  updateExpenseController,
+} from "../controllers/expense.controller.js";
 import { authenticateToken } from "../middleware/auth.middleware.js";
 
 const router = Router();
+
+router.get("/categories", getExpenseCategoriesController);
 
 router.post(
   "/addExpenses",

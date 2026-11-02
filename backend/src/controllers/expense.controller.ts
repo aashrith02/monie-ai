@@ -1,4 +1,5 @@
 import { type Request, type Response } from "express";
+import { ExpenseCategory } from "../generated/prisma/client.js";
 import {
   createExpense,
   getExpensesByUserId,
@@ -6,6 +7,20 @@ import {
   type CreateExpenseInput,
   updateExpense
 } from "../services/expense.service.js";
+
+function isExpenseCategory(value: unknown): value is ExpenseCategory {
+  return Object.values(ExpenseCategory).some((category) => category === value);
+}
+
+function isExpenseCategories(value: unknown): value is ExpenseCategory[] {
+  return Array.isArray(value) && value.length > 0 && value.every(isExpenseCategory);
+}
+
+export function getExpenseCategoriesController(_req: Request, res: Response) {
+  return res.status(200).json({
+    categories: Object.values(ExpenseCategory),
+  });
+}
 
 export async function createExpenseController(
   req: Request,
@@ -17,6 +32,12 @@ export async function createExpenseController(
     if (!userId) {
       return res.status(401).json({
         message: "Unauthorized",
+      });
+    }
+
+    if (!isExpenseCategories(req.body?.categories)) {
+      return res.status(400).json({
+        message: "Select at least one valid category",
       });
     }
 
@@ -140,6 +161,15 @@ export async function updateExpenseController(req: Request, res: Response) {
     }
 
     const expenseId = req.params.id;
+
+    if (
+      req.body?.categories !== undefined &&
+      !isExpenseCategories(req.body.categories)
+    ) {
+      return res.status(400).json({
+        message: "Select at least one valid category",
+      });
+    }
 
     const input: Partial<CreateExpenseInput> = req.body;
 

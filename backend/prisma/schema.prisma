@@ -8,17 +8,28 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Expense {
-  id        String   @id @default(uuid())
-  title     String
-  amount    Decimal  @db.Decimal(10, 2)
-  category  String
-  date      DateTime
-  notes     String?
-  userId    String
-  createdAt DateTime @default(now())
+enum ExpenseCategory {
+  Food
+  Transport
+  Shopping
+  Entertainment
+  Bills
+  Health
+  Bad_Habits @map("Bad Habits")
+  Other
+}
 
-  User      User     @relation(fields: [userId], references: [id])
+model Expense {
+  id         String            @id @default(uuid())
+  title      String
+  amount     Decimal           @db.Decimal(10, 2)
+  categories ExpenseCategory[]
+  date       DateTime
+  notes      String?
+  userId     String
+  createdAt  DateTime          @default(now())
+
+  User       User              @relation(fields: [userId], references: [id])
 }
 
 model User {

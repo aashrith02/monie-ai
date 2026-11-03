@@ -1,16 +1,22 @@
 import {
   Box,
   Button,
+  Checkbox,
   Dialog,
   DialogContent,
   DialogTitle,
+  FormControl,
+  FormHelperText,
+  InputLabel,
+  ListItemText,
   MenuItem,
+  Select,
   Stack,
   TextField,
 } from "@mui/material";
 
-import { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useEffect, useState } from "react";
+import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -21,12 +27,16 @@ const expenseSchema = z.object({
     .number()
     .positive("Amount must be greater than 0"),
 
-  category: z.string().min(1, "Category is required"),
+  categories: z.array(z.string()).min(1, "Select at least one category"),
 
   date: z.string().min(1, "Date is required"),
 
   notes: z.string().optional(),
 });
+
+function getCategoryLabel(category: string) {
+  return category.replaceAll("_", " ");
+}
 
 type ExpenseFormData = z.infer<typeof expenseSchema>;
 
@@ -34,7 +44,7 @@ type Expense = {
   id: string;
   title: string;
   amount: number | string;
-  category: string;
+  categories: string[];
   date: string;
   notes?: string | null;
 };
@@ -56,7 +66,11 @@ export default function ExpenseDialog({
   onEdit,
   onSave,
 }: ExpenseDialogProps) {
+  const [categories, setCategories] = useState<string[]>([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(false);
+  const [categoriesError, setCategoriesError] = useState("");
   const {
+    control,
     register,
     handleSubmit,
     reset,
@@ -66,11 +80,56 @@ export default function ExpenseDialog({
     defaultValues: {
       title: "",
       amount: undefined,
-      category: "",
+      categories: [],
       date: new Date().toISOString().split("T")[0],
       notes: "",
     },
   });
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    const abortController = new AbortController();
+    setCategoriesLoading(true);
+    setCategoriesError("");
+
+    fetch("http://localhost:5001/api/expenses/categories", {
+      signal: abortController.signal,
+    })
+      .then(async (response) => {
+        if (!response.ok) {
+          throw new Error("Failed to load expense categories");
+        }
+
+        const data: { categories: unknown } = await response.json();
+        if (
+          !Array.isArray(data.categories) ||
+          !data.categories.every((category) => typeof category === "string")
+        ) {
+          throw new Error("Invalid expense categories response");
+        }
+
+        setCategories(data.categories);
+      })
+      .catch((error: unknown) => {
+        if (abortController.signal.aborted) {
+          return;
+        }
+        console.error("Error loading expense categories:", error);
+        setCategoriesError(
+          "Unable to load categories. Close and reopen this dialog to retry.",
+        );
+      })
+      .finally(() => {
+        if (!abortController.signal.aborted) {
+          setCategoriesLoading(false);
+        }
+      });
+
+    return () => abortController.abort();
+  }, [open]);
 
   /*
    * When the dialog opens with an expense,
@@ -83,7 +142,7 @@ export default function ExpenseDialog({
       reset({
         title: expense.title,
         amount: Number(expense.amount),
-        category: expense.category,
+        categories: expense.categories,
         date: expense.date.split("T")[0],
         notes: expense.notes ?? "",
       });
@@ -93,7 +152,7 @@ export default function ExpenseDialog({
       reset({
         title: "",
         amount: undefined,
-        category: "",
+        categories: [],
         date: new Date().toISOString().split("T")[0],
         notes: "",
       });
@@ -242,30 +301,42 @@ export default function ExpenseDialog({
               helperText={errors.amount?.message}
             />
 
-            {/* Category */}
-            <TextField
-              select
-              label="Category"
+            {/* Categories */}
+            <FormControl
               fullWidth
-              {...register("category")}
-              error={!!errors.category}
-              helperText={errors.category?.message}
-              slotProps={{
-                select: {
-                  readOnly: isView,
-                },
-              }}
+              error={!!errors.categories || !!categoriesError}
             >
-              <MenuItem value="Food">Food</MenuItem>
-              <MenuItem value="Transport">Transport</MenuItem>
-              <MenuItem value="Shopping">Shopping</MenuItem>
-              <MenuItem value="Entertainment">
-                Entertainment
-              </MenuItem>
-              <MenuItem value="Bills">Bills</MenuItem>
-              <MenuItem value="Health">Health</MenuItem>
-              <MenuItem value="Other">Other</MenuItem>
-            </TextField>
+              <InputLabel id="expense-categories-label">Categories</InputLabel>
+              <Controller
+                name="categories"
+                control={control}
+                render={({ field }) => (
+                  <Select
+                    {...field}
+                    labelId="expense-categories-label"
+                    label="Categories"
+                    multiple
+                    disabled={isView || categoriesLoading || !!categoriesError}
+                    renderValue={(selected) =>
+                      selected.map(getCategoryLabel).join(", ")
+                    }
+                  >
+                    {categories.map((category) => (
+                      <MenuItem key={category} value={category}>
+                        <Checkbox checked={field.value.includes(category)} />
+                        <ListItemText primary={getCategoryLabel(category)} />
+                      </MenuItem>
+                    ))}
+                  </Select>
+                )}
+              />
+              <FormHelperText>
+                {categoriesError ||
+                  (categoriesLoading
+                    ? "Loading categories..."
+                    : errors.categories?.message)}
+              </FormHelperText>
+            </FormControl>
 
             {/* Date */}
             <TextField
@@ -338,6 +409,7 @@ export default function ExpenseDialog({
                 <Button
                   type="submit"
                   variant="contained"
+                  disabled={categoriesLoading || !!categoriesError}
                   sx={{
                     textTransform: "none",
                     borderRadius: 2,
@@ -352,6 +424,7 @@ export default function ExpenseDialog({
                 <Button
                   type="submit"
                   variant="contained"
+                  disabled={categoriesLoading || !!categoriesError}
                   sx={{
                     textTransform: "none",
                     borderRadius: 2,
@@ -367,4 +440,3 @@ export default function ExpenseDialog({
     </Dialog>
   );
 }
-
